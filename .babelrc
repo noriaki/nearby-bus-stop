@@ -1,0 +1,10 @@
+{
+  "env": {
+    "batch": {
+      "presets": [
+        ["env", { "targets": { "node": "current" } }],
+        "stage-0"
+      ]
+    }
+  }
+}
