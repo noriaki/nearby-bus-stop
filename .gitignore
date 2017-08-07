@@ -55,5 +55,9 @@ typings/
 .yarn-integrity
 
 # dotenv environment variables file
-.env
+.env*
+!.env.sample
 
+# my app
+.next/
+dist/
