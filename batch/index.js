@@ -6,18 +6,19 @@ Crawler.crawl(async (crawler) => {
   const routeId = 184;
   const stopId = 1251;
 
-  const info = await dayIds.reduce(async (ret, dayId, index) => {
+  let info = {};
+  /* eslint-disable no-await-in-loop */
+  for (const dayId of dayIds) {
     await crawler.visit(Crawler.buildPath({
       daydiv: dayId, poleno: poleNo, routecode: routeId, stopid: stopId,
     }));
 
-    let tmp = await ret;
-    if (index === 0) {
+    if (dayId === dayIds[0]) {
       const routeName = await crawler.getRouteName();
       const stopName = await crawler.getBusStopName();
       const destName = await crawler.getDestinationName();
 
-      tmp = {
+      info = {
         stop: {
           id: stopId,
           name: stopName,
@@ -37,16 +38,15 @@ Crawler.crawl(async (crawler) => {
     }
 
     const timeTable = await crawler.getTimeTable();
-    tmp.table.push({
+    info.table.push({
       day: {
         id: dayId,
         name: days[dayId],
       },
       data: timeTable,
     });
-
-    return tmp;
-  }, Promise.resolve({}));
+  }
+  /* eslint-enable no-await-in-loop */
 
   console.log(JSON.stringify(info));
 });
