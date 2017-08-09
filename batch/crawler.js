@@ -22,20 +22,19 @@ class Crawler extends Chromy {
   )
 
   getRouteName = async () => {
-    const routeName = await this.evaluate(() => (
-      document.querySelector('.icn_gr').textContent.trim()
-    ));
+    const routeNodeId = await this.querySelector('.icn_gr');
+    const routeName = (await this.text(routeNodeId)).trim();
     return moji(routeName).convert('ZE', 'HE').toString();
   }
 
-  getBusStopName = () => this.evaluate(() => (
-    document.querySelector('.title_bl').textContent.trim()
-  ))
+  getBusStopName = async () => {
+    const busStopNodeId = await this.querySelector('.title_bl');
+    return (await this.text(busStopNodeId)).trim();
+  }
 
   getDestinationName = async () => {
-    const dest = await this.evaluate(() => (
-      document.querySelector('.mb5').textContent.trim()
-    ));
+    const destNodeId = await this.querySelector('.mb5');
+    const dest = (await this.text(destNodeId)).trim();
     const m = /^行先:(.*)行$/.exec(dest);
     if (m && m.length > 1) { return m[1]; }
     return null;
@@ -73,8 +72,10 @@ class Crawler extends Chromy {
     return nodeIds;
   }
   performQuerySelector = async (method, selector, contextNodeId) => {
-    const nodeId = !contextNodeId ?
-            (await this.client.DOM.getDocument()).root.nodeId : contextNodeId;
+    const nodeId = (
+      !contextNodeId ?
+        (await this.client.DOM.getDocument()).root.nodeId : contextNodeId
+    );
     return this.client.DOM[method]({ nodeId, selector });
   }
 
