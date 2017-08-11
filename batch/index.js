@@ -3,7 +3,7 @@ import Crawler from './crawler';
 Crawler.crawl(async (crawler) => {
   const dayIds = [1, 2, 3];
   const poleNo = 1;
-  const routeId = 184;
+  const routeId = 46;
   const stopId = 1251;
 
   let info = {};
@@ -17,6 +17,8 @@ Crawler.crawl(async (crawler) => {
       const routeName = await crawler.getRouteName();
       const stopName = await crawler.getBusStopName();
       const destName = await crawler.getDestinationName();
+      const subDests = await crawler.getSubDestinationName();
+      const version = await crawler.getTimeTableVersion();
 
       info = {
         stop: {
@@ -30,9 +32,11 @@ Crawler.crawl(async (crawler) => {
           id: routeId,
           name: routeName,
         },
-        dest: {
-          name: destName,
+        dests: {
+          '*': destName,
+          ...subDests,
         },
+        version,
         table: [],
       };
     }

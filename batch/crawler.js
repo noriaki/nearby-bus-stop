@@ -40,6 +40,27 @@ class Crawler extends Chromy {
     return null;
   }
 
+  getNotes = async () => {
+    const nodeId = await this.querySelector('.fs11');
+    const html = (await this.getAttribute('innerHTML', nodeId)).value;
+    return html.split(/<br[\s/]*?>/).map(s => s.trim());
+  }
+
+  getSubDestinationName = async () => {
+    const notes = await this.getNotes();
+    return notes.slice(0, -2).reduce((dests, note) => {
+      const [sign, ...dest] = note.split('：');
+      return { ...dests, [sign]: dest.join('：').slice(0, -1) };
+    }, {});
+  }
+
+  getTimeTableVersion = async () => {
+    const version = (await this.getNotes()).pop();
+    const m = /^改正日：(.*)改正$/.exec(version);
+    if (m && m.length > 1) { return m[1]; }
+    return null;
+  }
+
   getTimeTable = async () => {
     const innerTableNodeIds = await this.querySelectorAll('table.inner');
     return Promise.all(innerTableNodeIds.map(async (nodeId) => {
@@ -49,13 +70,24 @@ class Crawler extends Chromy {
       const minuteNodeIds = await Promise.all(minuteTableNodeIds.map(
         minuteTableNodeId => this.querySelectorAll('td', minuteTableNodeId)
       ));
+      const sub = {};
       const minutes = (await Promise.all(
         flatten(minuteNodeIds).map(async (minuteNodeId) => {
-          const minute = await this.text(minuteNodeId);
+          const childElementCount = (
+            await this.getAttribute('childElementCount', minuteNodeId)
+          ).value;
+          if (childElementCount === 0) {
+            const minute = (await this.text(minuteNodeId)).trim();
+            return parseInt(minute, 10);
+          }
+          const subNodeId = await this.querySelector('sub', minuteNodeId);
+          const subText = (await this.text(subNodeId)).trim();
+          const minute = (await this.text(minuteNodeId)).replace(subText, '').trim();
+          sub[minute] = moji(subText).convert('HK', 'ZK').toString();
           return parseInt(minute, 10);
         })
       )).filter(n => !Number.isNaN(n));
-      return { hour, minutes };
+      return { hour, minutes, sub };
     }));
   }
 
