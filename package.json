@@ -8,7 +8,18 @@
     "node": "8.2.1"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "jest",
+    "test:batch": "jest batch",
+    "test:client": "jest client",
+    "test:server": "jest server",
+    "dev": "",
+    "dev:batch": "NODE_ENV=batch babel-node batch/index.js",
+    "build": "",
+    "build:batch": "NODE_ENV=batch babel batch -d dist/batch",
+    "start": "",
+    "start:batch": "node dist/batch/index.js",
+    "lint": "eslint --quiet .",
+    "lint:batch": "eslint --quiet batch"
   },
   "repository": {
     "type": "git",
@@ -25,8 +36,11 @@
   },
   "homepage": "https://github.com/noriaki/nearby-bus-stop#readme",
   "devDependencies": {
+    "babel-cli": "^6.24.1",
     "babel-eslint": "^7.2.3",
     "babel-jest": "^20.0.3",
+    "babel-preset-env": "^1.6.0",
+    "babel-preset-stage-0": "^6.24.1",
     "enzyme": "^2.9.1",
     "eslint": "^4.4.0",
     "eslint-config-airbnb": "^15.1.0",
@@ -40,6 +54,8 @@
   },
   "dependencies": {
     "chromy": "^0.4.5",
+    "lodash": "^4.17.4",
+    "moji": "niwaringo/moji#a1511d1",
     "prop-types": "^15.5.10",
     "react": "^15.6.1",
     "react-dom": "^15.6.1"
