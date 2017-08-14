@@ -52,7 +52,8 @@ class Crawler extends Chromy {
     const notes = await this.getNotes();
     return notes.slice(0, -2).reduce((dests, note) => {
       const [sign, ...dest] = note.split('：');
-      return { ...dests, [sign]: dest.join('：').slice(0, -1) };
+      const subKey = moji(sign).convert('HK', 'ZK').toString();
+      return { ...dests, [subKey]: dest.join('：').slice(0, -1) };
     }, {});
   }
 
