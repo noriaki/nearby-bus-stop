@@ -1,4 +1,4 @@
-import { parse } from '../jpera';
+import { parse } from '../lib/jpera';
 
 describe('jpera.parse', () => {
   describe('should returning `null` when invalid argument', () => {

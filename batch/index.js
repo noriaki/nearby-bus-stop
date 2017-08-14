@@ -1,4 +1,4 @@
-import Crawler from './crawler';
+import Crawler from './lib/crawler';
 import { createConnection } from '../common/db';
 import {
   timetableSchema,
