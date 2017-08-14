@@ -3,6 +3,8 @@ import Chromy from 'chromy';
 import moji from 'moji';
 import flatten from 'lodash/flatten';
 
+import { parse } from './jpera';
+
 class Crawler extends Chromy {
   host = 'tobus.jp'
   origin = `https://${this.host}`
@@ -57,7 +59,7 @@ class Crawler extends Chromy {
   getTimeTableVersion = async () => {
     const version = (await this.getNotes()).pop();
     const m = /^改正日：(.*)改正$/.exec(version);
-    if (m && m.length > 1) { return m[1]; }
+    if (m && m.length > 1) { return parse(m[1]); }
     return null;
   }
 
@@ -157,13 +159,15 @@ class Crawler extends Chromy {
       }
 
       // exec function
-      await operation(crawler, finalOptions);
+      const results = await operation(crawler, finalOptions);
 
       // finalize
       await crawler.close();
+      return results;
     } catch (error) {
       console.error(error);
       await crawler.close();
+      return error;
     }
   }
 }
