@@ -35,6 +35,7 @@ export const timetableSchema = new Schema({
   version: String,
   dayId: {
     type: Number,
+    index: true,
     min: [...Object.keys(dayNameEnum)].shift(),
     max: [...Object.keys(dayNameEnum)].pop(),
   },
