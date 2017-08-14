@@ -1,65 +1,83 @@
-import Crawler from './crawler';
+import Crawler from './lib/crawler';
+import { createConnection } from '../common/db';
+import {
+  timetableSchema,
+  generateIdentifier,
+  dayNameEnum,
+} from '../common/db/models';
+import sources from './sources';
+
+const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
 
 Crawler.crawl(async (crawler) => {
-  const dayIds = [1, 2, 3];
-  const poleNo = 1;
-  const routeId = 46;
-  const stopId = 1251;
+  const dayIds = Object.keys(dayNameEnum);
+  const results = [];
 
-  let info = {};
   /* eslint-disable no-await-in-loop */
-  for (const dayId of dayIds) {
-    await crawler.visit(Crawler.buildPath({
-      daydiv: dayId, poleno: poleNo, routecode: routeId, stopid: stopId,
-    }));
+  for (const source of sources) {
+    for (const dayId of dayIds) {
+      const { stopId, poleNo, routeId } = source;
 
-    if (dayId === dayIds[0]) {
-      const routeName = await crawler.getRouteName();
-      const stopName = await crawler.getBusStopName();
-      const destName = await crawler.getDestinationName();
-      const subDests = await crawler.getSubDestinationName();
-      const version = await crawler.getTimeTableVersion();
+      await crawler.visit(Crawler.buildPath({
+        daydiv: dayId, poleno: poleNo, routecode: routeId, stopid: stopId,
+      }));
 
-      info = {
-        stop: {
-          id: stopId,
-          name: stopName,
-        },
-        pole: {
-          id: poleNo,
-        },
-        route: {
-          id: routeId,
-          name: routeName,
-        },
-        dests: {
-          '*': destName,
-          ...subDests,
-        },
-        version,
-        table: [],
-      };
+      try {
+        const stopName = await crawler.getBusStopName();
+        const routeName = await crawler.getRouteName();
+        const destName = await crawler.getDestinationName();
+        const subDests = await crawler.getSubDestinationName();
+        const version = await crawler.getTimeTableVersion();
+        const timetable = await crawler.getTimeTable();
+
+        results.push({
+          stopId,
+          stopName,
+          poleNo,
+          routeId,
+          routeName,
+          dests: {
+            '*': destName,
+            ...subDests,
+          },
+          version,
+          dayId,
+          dayName: dayNameEnum[dayId],
+          timetable,
+        });
+      } catch (error) {
+        console.error('%s: %s', error.name, error.message);
+        console.error({
+          daydiv: dayId, poleno: poleNo, routecode: routeId, stopid: stopId,
+        });
+      }
+
+      await sleep(500);
     }
-
-    const timeTable = await crawler.getTimeTable();
-    info.table.push({
-      day: {
-        id: dayId,
-        name: days[dayId],
-      },
-      data: timeTable,
-    });
   }
   /* eslint-enable no-await-in-loop */
 
-  console.log(JSON.stringify(info));
-});
+  return results;
+}).then(async (results) => {
+  const connection = createConnection();
+  const Timetable = connection.model('Timetable', timetableSchema);
 
-const days = {
-  1: '平日',
-  2: '土曜',
-  3: '休日',
-};
+  /* eslint-disable no-await-in-loop */
+  for (const result of results) {
+    const { stopId, poleNo, routeId, dayId } = result;
+
+    const identifier = generateIdentifier({ stopId, poleNo, routeId, dayId });
+
+    /* const { timetable } = */await Timetable.findOneAndUpdate(
+      { identifier },
+      { ...result, identifier },
+      { new: true, upsert: true }
+    );
+
+    // console.log({ timetable, results });
+  }
+  /* eslint-enable no-await-in-loop */
+}).then(() => process.exit()).catch(error => console.log(error));
 
 process.on('unhandledRejection', (err) => {
   console.error(err);
